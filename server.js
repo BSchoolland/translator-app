@@ -21,16 +21,15 @@ db.serialize(() => {
 
 app.use(express.static("public"));
 
-app.get("/", (req, res) => {
+app.get("/single", (req, res) => {
     res.sendFile(__dirname + "/public/index.html");
 });
 
-app.get("/group", (req, res) => {
+app.get("/", (req, res) => {
     res.sendFile(__dirname + "/public/group.html");
 }); 
 
 async function getMessages(userLang) {
-    console.log('getting ' + userLang + " messages")
     // get messages and messageColors from the database based on the user's preferred language
     return new Promise((resolve, reject) => {
         db.all(`SELECT * FROM messages_${userLang}`, (err, rows) => {
@@ -40,7 +39,7 @@ async function getMessages(userLang) {
             const messages = rows.map(row => row.message);
             const messageColors = rows.map(row => row.color);
             const messagesWithColors = messages.map((message, index) => {
-                return { message, color: messageColors[index] };
+                return { message, color: messageColors[index], id: index};
             });
             resolve(messagesWithColors);
         });
@@ -49,25 +48,29 @@ async function getMessages(userLang) {
 
 app.post("/api/messages", async (req, res) => {
     let userLang = req.body.userLang
-    console.log(userLang)
+    // console.log(userLang)
     // since userLang is user entered, we need to sanitize it
-    userLang = userLang.replace(/[^a-z]/gi, "");
+    try {
+        userLang = userLang.replace(/[^a-z]/gi, "");
     
-    userLang = determineLanguage(userLang);
-    const messages = await getMessages(userLang);
-    res.json(messages);
+        userLang = determineLanguage(userLang);
+        const messages = await getMessages(userLang);
+        res.json(messages);
+    }
+    catch (err) {
+        console.log(err);
+        res.json({ error: "An error occurred" });
+    }
+    
 });
 
-const translateMessageWrapper = async (message, from, to) => {
+const translateMessageWrapper = async (message, color, from, to) => {
     // get the conversation history from the database
     console.log('translating message:', message, 'from:', from, 'to:', to);
-    let fullFromMessages = await getMessages(from);
-    let fullToMessages = await getMessages(to);
-    // get just the messages from the conversation history
-    const fromMessages = fullFromMessages.map(message => message.message);
-    const toMessages = fullToMessages.map(message => message.message);
+    let fromMessages = await getMessages(from);
+    let toMessages = await getMessages(to);
     // append the new message to the conversation history
-    fromMessages.push(message);
+    fromMessages.push( {message, color} );
 
     // translate the message
     const translatedMessage = await translateMessage(fromMessages, toMessages, from, to);
@@ -85,12 +88,12 @@ app.post("/api/messages/new", async (req, res) => {
     
     if (userLang === "en") {
         // translate the message to Korean
-        const translatedMessage = await translateMessageWrapper(message, "en", "ko");
+        const translatedMessage = await translateMessageWrapper(message, messageColor, "en", "ko");
         // save the message in Korean
         insertMessage(translatedMessage, "ko", messageColor);
     } else {
         // translate the message to English
-        const translatedMessage = await translateMessageWrapper(message, "ko", "en");
+        const translatedMessage = await translateMessageWrapper(message, messageColor, "ko", "en");
         // save the message in English
         insertMessage(translatedMessage, "en", messageColor);
     }

@@ -55,10 +55,54 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// when the page loads, request messages from the server
-document.addEventListener('DOMContentLoaded', function() {
+// // when the page loads, request messages from the server
+// document.addEventListener('DOMContentLoaded', function() {
    
-    // add the messages to the message stack. Send the user's preferred language to the server with the request
+//     // add the messages to the message stack. Send the user's preferred language to the server with the request
+//     const messageStack = document.getElementById('message-stack');
+//     fetch('/api/messages', {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json'
+//         },
+//         body: JSON.stringify({ userLang })
+//     })
+//     .then(response => response.json())
+//     .then(response => {
+//         console.log(response);
+//         response.forEach(message => {
+//             const messageElement = document.createElement('div');
+            
+//             messageElement.textContent = message.message;
+//             messageElement.style.backgroundColor = message.color;
+//             // if the color is too dark, change the text color to white
+//             const color = message.color;
+//             const r = parseInt(color.substring(1, 3), 16);
+//             const g = parseInt(color.substring(3, 5), 16);
+//             const b = parseInt(color.substring(5, 7), 16);
+//             const brightness = Math.sqrt(0.299 * r*r + 0.587 * g*g + 0.114 * b*b);
+//             if (brightness < 128) {
+//                 messageElement.style.color = 'white';
+//             }
+//             // if the message color is the same as the user's selected color, change the class name
+//             const selectedColor = localStorage.getItem('selectedColor');
+//             if (selectedColor === message.color) {
+//                 messageElement.classList.add('message-from-me');
+//             }
+//             else {
+//                 messageElement.classList.add('message');
+
+//             }
+            
+//             messageStack.appendChild(messageElement);
+//         });
+//     });
+// });
+
+let receivedMessages = [];
+
+// TEMPORARY SOLUTION: every second, request messages from the server
+setInterval(() => {
     const messageStack = document.getElementById('message-stack');
     fetch('/api/messages', {
         method: 'POST',
@@ -70,9 +114,13 @@ document.addEventListener('DOMContentLoaded', function() {
     .then(response => response.json())
     .then(response => {
         console.log(response);
-        response.forEach(message => {
+        // Filter out messages we've already received
+        const newMessages = response.filter(message => !receivedMessages.includes(message.id));
+        console.log('newMessages:', newMessages);
+        newMessages.forEach(message => {
+            // Add the message to our array of received messages
+            receivedMessages.push(message.id);
             const messageElement = document.createElement('div');
-            
             messageElement.textContent = message.message;
             messageElement.style.backgroundColor = message.color;
             // if the color is too dark, change the text color to white
@@ -91,13 +139,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             else {
                 messageElement.classList.add('message');
-
             }
-            
             messageStack.appendChild(messageElement);
         });
+        // Scroll to the bottom of the message stack as long as at least one new message was received
+        if (newMessages.length > 0) {
+            messageStack.scrollTop = messageStack.scrollHeight;
+        }
     });
-});
+}, 1000);
 
 // when the form is submitted, send the message to the server
 document.getElementById('message-form').addEventListener('submit', function(event) {
@@ -106,6 +156,10 @@ document.getElementById('message-form').addEventListener('submit', function(even
     const message = messageInput.value;
     const userLang = localStorage.getItem('userLanguage');
     const messageColor = localStorage.getItem('selectedColor');
+    // if the message is empty, do nothing
+    if (!message || message === "") {
+        return;
+    }
     fetch('/api/messages/new', {
         method: 'POST',
         headers: {
