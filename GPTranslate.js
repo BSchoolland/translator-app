@@ -53,6 +53,9 @@ const translateMessage = async (fromMessages, toMessages, from, to) => {
         console.log('original message:', fromMessages[fromMessages.length - 1])
         console.log('Translated message:', response.choices[0].message.content);
         return response.choices[0].message.content
+
+        // to save money while I debug the rest of the code, I'm going to return the original message
+        // return fromMessages[fromMessages.length - 1];
     } catch (error) {
         console.error('Error translating message:', error);
         return null;

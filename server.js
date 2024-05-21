@@ -11,10 +11,12 @@ app.use(express.urlencoded({ extended: true }));
 //sqlite3
 const sqlite3 = require("sqlite3");
 const db = new sqlite3.Database("messages.db");
+// AI translator
+const translateMessage = require("./GPTranslate.js");
 // create two tables, one for english messages and one for korean messages
 db.serialize(() => {
-    db.run("CREATE TABLE IF NOT EXISTS messages_en (id INTEGER PRIMARY KEY, message TEXT)");
-    db.run("CREATE TABLE IF NOT EXISTS messages_ko (id INTEGER PRIMARY KEY, message TEXT)");
+    db.run("CREATE TABLE IF NOT EXISTS messages_en (id INTEGER PRIMARY KEY, message TEXT, color TEXT)");
+    db.run("CREATE TABLE IF NOT EXISTS messages_ko (id INTEGER PRIMARY KEY, message TEXT, color TEXT)");
 });
 
 app.use(express.static("public"));
@@ -28,49 +30,71 @@ app.get("/group", (req, res) => {
 }); 
 
 async function getMessages(userLang) {
-    // get messages from the database based on the user's preferred language
+    console.log('getting ' + userLang + " messages")
+    // get messages and messageColors from the database based on the user's preferred language
     return new Promise((resolve, reject) => {
-        db.all(`SELECT message FROM messages_${userLang}`, (err, rows) => {
+        db.all(`SELECT * FROM messages_${userLang}`, (err, rows) => {
             if (err) {
                 reject(err);
-            } else {
-                const messages = rows.map(row => row.message);
-                resolve(messages);
             }
+            const messages = rows.map(row => row.message);
+            const messageColors = rows.map(row => row.color);
+            const messagesWithColors = messages.map((message, index) => {
+                return { message, color: messageColors[index] };
+            });
+            resolve(messagesWithColors);
         });
     });
 }
 
 app.post("/api/messages", async (req, res) => {
-    let userLang = req.headers["accept-language"];
+    let userLang = req.body.userLang
+    console.log(userLang)
     // since userLang is user entered, we need to sanitize it
     userLang = userLang.replace(/[^a-z]/gi, "");
+    
     userLang = determineLanguage(userLang);
     const messages = await getMessages(userLang);
     res.json(messages);
 });
 
-const translateMessage = async (message, from, to) => {
-    
+const translateMessageWrapper = async (message, from, to) => {
+    // get the conversation history from the database
+    console.log('translating message:', message, 'from:', from, 'to:', to);
+    let fullFromMessages = await getMessages(from);
+    let fullToMessages = await getMessages(to);
+    // get just the messages from the conversation history
+    const fromMessages = fullFromMessages.map(message => message.message);
+    const toMessages = fullToMessages.map(message => message.message);
+    // append the new message to the conversation history
+    fromMessages.push(message);
+
+    // translate the message
+    const translatedMessage = await translateMessage(fromMessages, toMessages, from, to);
+    // return the translated message
+    return translatedMessage;
 };
 
-app.post("/api/messages/new", (req, res) => {
+app.post("/api/messages/new", async (req, res) => {
     const message = req.body.message;
-    let userLang = req.headers["accept-language"];
+    let userLang = req.body.userLang;
+    const messageColor = req.body.messageColor;
     userLang = userLang.replace(/[^a-z]/gi, "");
     userLang = determineLanguage(userLang);
-    insertMessage(message, userLang);
+    console.log('userLang:', userLang);
+    
     if (userLang === "en") {
         // translate the message to Korean
-        translateMessage(message, "en", "ko");
+        const translatedMessage = await translateMessageWrapper(message, "en", "ko");
         // save the message in Korean
-        insertMessage(message, "ko");
+        insertMessage(translatedMessage, "ko", messageColor);
     } else {
         // translate the message to English
-        translateMessage(message, "ko", "en");
+        const translatedMessage = await translateMessageWrapper(message, "ko", "en");
         // save the message in English
-        insertMessage(message, "en");
+        insertMessage(translatedMessage, "en", messageColor);
     }
+    insertMessage(message, userLang, messageColor);
     res.json({ status: "ok" });
 });
 
@@ -93,8 +117,12 @@ function determineLanguage(userLang) {
     }
 }
 
-function insertMessage(message, lang) {
-    db.run(`INSERT INTO messages_${lang} (message) VALUES (?)`, message);
+function insertMessage(message, lang, messageColor) {
+    console.log("inserting message:", message, "lang:", lang);
+    db.run(`INSERT INTO messages_${lang} (message, color) VALUES (?, ?)`, [
+        message,
+        messageColor,
+    ]);
 }
 
 

@@ -98,3 +98,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// when the form is submitted, send the message to the server
+document.getElementById('message-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const messageInput = document.getElementById('message-input');
+    const message = messageInput.value;
+    const userLang = localStorage.getItem('userLanguage');
+    const messageColor = localStorage.getItem('selectedColor');
+    fetch('/api/messages/new', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message, userLang, messageColor })
+    })
+    .then(response => response.json())
+    .then(response => {
+        console.log(response);
+        messageInput.value = '';
+    });
+});
