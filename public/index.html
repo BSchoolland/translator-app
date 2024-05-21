@@ -1,1 +1,35 @@
-<!DOCTYPE html><html><head><title>Translator App</title></head><body><h1>Welcome to the Translator App</h1></body></html>
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="index.css">
+
+    <title>AI Translator App</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+    <div class="langage-selection-container">
+        <div class="language-container">
+            <img src="from.jpg" alt="From language" style="width: 50px; height: 50px;">
+            <select id="from-language">
+                <option value="en">English</option>
+                <option value="ko">한국말</option>
+            </select>
+        </div>
+        <button id="swap-languages-button">
+            <img src="swap.png" alt="Swap languages" style="width: 20px; height: 20px;">
+        </button>
+        <div class="language-container">
+            <img src="to.png" alt="To language" style="width: 50px; height: 50px;">
+            <select id="to-language">
+                <option value="en">English</option>
+                <option value="ko" selected>한국말</option>
+            </select>
+        </div>
+    </div>
+    <script src="index.js"></script>
+</body>
+
+</html>
