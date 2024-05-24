@@ -47,6 +47,8 @@ node server.js
 
 2. Open your browser and navigate to `http://localhost:3000` to access the application.
 
+3. Connect more devices to the same network and navigate to `http://<your_local_ip>:3000` to access the application from other devices.  You can find your local IP address by running `ipconfig` on Windows or `ifconfig` on macOS/Linux.
+
 ## Project Structure
 
 - `server.js`: Main server file that runs the Express web server.
