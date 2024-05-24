@@ -4,17 +4,23 @@
 
 The TranslatorApp is a translation tool that uses OpenAI's API to translate messages between English and Korean. It tracks conversational context to provide more accurate translations.
 
+![image](https://github.com/BSchoolland/translator-app/assets/95189424/0907ef22-b4cc-44b3-84af-b026f5232bdb)
+
 ## Features
 
 - Translates messages between English and Korean
 - Maintains conversational context for better translations
 - Simple web interface for input and output
 
+## Potential Future Enhancements
+- Near universal language support (easier than it sounds with ChatGPT)
+- Account system
+
 ## Installation
 
 1. Clone the repository to your local machine:
 ```
-git clone <repository-url>
+git clone https://github.com/BSchoolland/translator-app
 ```
 
 2. Navigate into the project directory:
