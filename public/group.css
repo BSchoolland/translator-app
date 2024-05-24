@@ -30,7 +30,7 @@ input {
     margin: 5%;
 }
 
-.message-form input {
+.message-form textarea {
     width: 100%;
     margin: 10px 0;
     font-size: 1.5em;
@@ -58,9 +58,8 @@ input {
     font-size: 1.5em;
 }
 
-.message p {
-    margin: 0;
-    font-size: 1em;
+.message {
+    font-size: 1.5em;
 }
 
 .message-from-me {
@@ -80,9 +79,8 @@ input {
     font-size: 1.5em;
 }
 
-.message-from-me p {
-    margin: 0;
-    font-size: 1em;
+.message-from-me{
+    font-size: 1.5em;
 }
 
 .message-stack {
