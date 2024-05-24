@@ -47,7 +47,7 @@ const translateMessage = async (fromMessages, toMessages, from, to) => {
         console.log('conversationHistory:', conversationHistory);
         // Make the API request
         const response = await openai_api.chat.completions.create({
-            model: "gpt-3.5-turbo",
+            model: "gpt-4o",
             messages: conversationHistory
         });
 
